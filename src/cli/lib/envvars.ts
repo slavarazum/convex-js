@@ -16,6 +16,7 @@ const _FRAMEWORKS = [
   "SvelteKit",
   "Expo",
   "TanStackStart",
+  "Nuxt",
 ] as const;
 type Framework = (typeof _FRAMEWORKS)[number];
 
@@ -207,6 +208,20 @@ export async function suggestedEnvVarNames(ctx: Context): Promise<{
     };
   }
 
+  // Nuxt is detected before Vite: Nuxt builds on Vite, and browser-side
+  // environment variables are exposed through Nuxt's runtime config, whose
+  // override prefix is NUXT_PUBLIC_ rather than VITE_.
+  const isNuxt = "nuxt" in packages;
+  if (isNuxt) {
+    return {
+      detectedFramework: "Nuxt",
+      convexUrlEnvVar: "NUXT_PUBLIC_CONVEX_URL",
+      convexSiteEnvVar: "NUXT_PUBLIC_CONVEX_SITE_URL",
+      frontendDevUrl: "http://localhost:3000",
+      publicPrefix: "NUXT_PUBLIC_",
+    };
+  }
+
   // Vite is a dependency of a lot of things; vite appearing in dependencies is not a strong indicator.
   const isVite = "vite" in packages;
 
@@ -351,7 +366,9 @@ function suggestedDevEnvFile(
   }
 
   // Remix is on team "don't commit the .env file," so .env is for dev.
-  if (framework === "Remix") {
+  // Nuxt joins it for a different reason: Nuxt loads `.env` on its own but
+  // never `.env.local`, which needs an explicit `nuxt dev --dotenv .env.local`.
+  if (framework === "Remix" || framework === "Nuxt") {
     return {
       existing: ctx.fs.exists(".env"),
       envFile: ".env",
@@ -372,6 +389,7 @@ export const EXPECTED_CONVEX_URL_NAMES = new Set([
   "VITE_CONVEX_URL" as const,
   "REACT_APP_CONVEX_URL" as const,
   "EXPO_PUBLIC_CONVEX_URL" as const,
+  "NUXT_PUBLIC_CONVEX_URL" as const,
 ]);
 type ConvexUrlEnvVar =
   typeof EXPECTED_CONVEX_URL_NAMES extends Set<infer T> ? T : never;
@@ -383,6 +401,7 @@ export const EXPECTED_SITE_URL_NAMES = new Set([
   "VITE_CONVEX_SITE_URL" as const,
   "REACT_APP_CONVEX_SITE_URL" as const,
   "EXPO_PUBLIC_CONVEX_SITE_URL" as const,
+  "NUXT_PUBLIC_CONVEX_SITE_URL" as const,
 ]);
 type ConvexSiteUrlEnvVar =
   typeof EXPECTED_SITE_URL_NAMES extends Set<infer T> ? T : never;
