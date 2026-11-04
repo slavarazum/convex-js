@@ -350,7 +350,7 @@ export async function watchAndPush(
                     );
                     void outerCtx.flushAndExit(1);
                   } else if (shellSigintListener) {
-                    // The command quit on its own, not because we signaled it.
+                    // The command exited on its own, so exit too.
                     void outerCtx.flushAndExit(0);
                   }
                 });
