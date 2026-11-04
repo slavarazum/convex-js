@@ -349,6 +349,9 @@ export async function watchAndPush(
                       `Command \`${shellCommand}\` exited with code ${code}`,
                     );
                     void outerCtx.flushAndExit(1);
+                  } else if (shellSigintListener) {
+                    // The command quit on its own, not because we signaled it.
+                    void outerCtx.flushAndExit(0);
                   }
                 });
               });
